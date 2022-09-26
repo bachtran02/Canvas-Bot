@@ -2,7 +2,7 @@ FROM python:3.9
 
 COPY canvas_bot/ canvas_bot/
 COPY requirements.txt ./requirements.txt
-COPY .env /.env
+COPY secrets/ secrets/
 
 RUN pip install -r requirements.txt
 

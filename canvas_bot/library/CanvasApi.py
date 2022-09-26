@@ -38,12 +38,16 @@ class CanvasApi:
     def get_all_active_courses(self, option='list-string'):
         course_list = []
         request_body = {
+            'include': ['favorites'],
             'enrollment_type': ['student'],
             'enrollment_state': 'active',
             'per_page': 100  # hard coding: maximum 100 courses (TODO: what if courses >= 100)
         }
         all_courses = self._get_all_courses_raw(request_body)
         for course in all_courses:
+            # only get favorite (starred) courses
+            if not course['is_favorite']:
+                continue
             if option == 'list-dict':
                 course_list.append({'id': str(course['id']), 'name': course['name']})
             elif option == 'list-string':

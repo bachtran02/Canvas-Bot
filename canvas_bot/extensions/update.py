@@ -2,6 +2,8 @@ import hikari
 import lightbulb
 from apscheduler.triggers.cron import CronTrigger
 
+from firebase_admin import firestore
+
 from canvas_bot.library.Firestore import Firestore
 from canvas_bot.library.CanvasApi import CanvasApi
 from canvas_bot.library.DiscordEmbed import DiscordEmbed
@@ -25,9 +27,18 @@ async def update_embeds() -> None:
         )
         await msg.edit(embed=embed)
 
+# def on_snapshot(col_snapshot, changes, read_time):
+#     for change in changes:
+#         if change.type.name == 'ADDED':
+#             print(f'New req: {change.document.id}')
+#             print(change.document.to_dict())
+
 @update_plugin.listener(hikari.StartedEvent)
 async def on_started(_: hikari.StartedEvent) -> None:
-    update_plugin.app.d.sched.add_job(update_embeds, CronTrigger(second="*/5"))
+    update_plugin.app.d.sched.add_job(update_embeds, CronTrigger(minute="*/10"))
+    
+    # initiate Firestore query-watch for new requests
+    # Firestore().query_watch(on_snapshot)
 
 
 def load(bot: lightbulb.BotApp) -> None:

@@ -46,7 +46,7 @@ class DiscordEmbed:
         if assgn_list:
             title = f"Due Within A Day | {len(assgn_list)} assignment(s)"
         else:
-            title = "No Assignment Due Within A Day"
+            title = "No Assignment Due In A Day"
             
         course_link = f"{os.environ.get('CANVAS_COURSE_BASE_URL')}{course_id}"
         body = makeBold(f'Course: {makeLink(course_title, course_link)}')
