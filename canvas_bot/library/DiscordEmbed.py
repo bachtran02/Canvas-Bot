@@ -42,11 +42,11 @@ class DiscordEmbed:
             icon=self.logo
         )
 
-    def duesoon_embed(self, course_title: str, course_id: str, assgn_list: list):
+    def duesoon_embed(self, course_title: str, course_id: str, assgn_list: list, due_in: int):
         if assgn_list:
-            title = f"Due Within A Day | {len(assgn_list)} assignment(s)"
+            title = f"Due within {due_in} Day(s) | {len(assgn_list)} assignment(s)"
         else:
-            title = "No Assignment Due In A Day"
+            title = f"No Assignment Due within {due_in} Day(s)"
             
         course_link = f"{os.environ.get('CANVAS_COURSE_BASE_URL')}{course_id}"
         body = makeBold(f'Course: {makeLink(course_title, course_link)}')

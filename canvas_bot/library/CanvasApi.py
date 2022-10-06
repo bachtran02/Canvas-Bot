@@ -55,10 +55,10 @@ class CanvasApi:
         return course_list
 
     # TODO: maybe add optional param for number of days before due
-    def get_due_within_day(self, course_id):
-        assgn_due_within_day = []
+    def get_due_in(self, course_id: str, due_in: int):
+        assgn_due_in = []
         now = datetime.utcnow()
-        request_body = {"order_by": "due_at", "bucket": "upcoming"}
+        request_body = {"order_by": "due_at", "bucket": "upcoming", "bucket": "future"}
 
         # exception
         if course_id not in self._all_course_id:
@@ -66,9 +66,10 @@ class CanvasApi:
 
         all_assgn = self._get_course_assignments(course_id, request_body)
         for assgn in all_assgn:
-            due = datetime.strptime(assgn['due_at'], '%Y-%m-%dT%H:%M:%SZ') 
-            if due - now <= timedelta(days=1):
-                assgn_due_within_day.append(assgn)
-            else:
-                break
-        return assgn_due_within_day
+            if assgn['due_at']: 
+                due = datetime.strptime(assgn['due_at'], '%Y-%m-%dT%H:%M:%SZ') 
+                if due - now <= timedelta(days=due_in):
+                    assgn_due_in.append(assgn)
+                else:
+                    break
+        return assgn_due_in

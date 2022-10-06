@@ -20,13 +20,20 @@ duesoon_plugin = lightbulb.Plugin("duesoon", "Get list of assignments due within
     description="Course short name",
     required=True,
 )
+@lightbulb.option(
+    name="due_in",
+    description="list of assignments due in given days",
+    required=False,
+    default=1
+)
 @lightbulb.command(
-    "duesoon", "Get assignments due within a day"
+    "duesoon", "Get assignments due within a number of days"
 )
 @lightbulb.implements(lightbulb.SlashCommand)
 async def duesoon(ctx: lightbulb.Context):
     course_id = ctx.options.course.split('-')[0].strip()
     course_title = ctx.options.title
+    due_in = int(ctx.options.due_in)
 
     embed = DiscordEmbed().duesoon_temp_embed()
     res = await ctx.respond(embed=embed)
@@ -34,13 +41,14 @@ async def duesoon(ctx: lightbulb.Context):
     
     Firestore().save_request({
         'course-info': {
-                'course-id': course_id,
-                'course-title': course_title 
-            },
+            'course-id': course_id,
+            'course-title': course_title 
+        },
         'discord': {
-                'channel-id': str(msg.channel_id),
-                'message-id': str(msg.id),
-            }
+            'channel-id': str(msg.channel_id),
+            'message-id': str(msg.id),
+        },
+        'due-in': due_in
     })
 
 
