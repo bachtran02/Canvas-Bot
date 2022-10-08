@@ -8,6 +8,11 @@ class Firestore:
     def save_request(self, data: dict):
         self.col.add(data)
 
+    def remove_request(self, document_id: str):
+        print("Embed message inacessible!")
+        print(document_id)
+        self.col.document(document_id).delete() 
+
     def get_all_requests(self):
         return self.col.get()
 
