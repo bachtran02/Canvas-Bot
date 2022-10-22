@@ -3,3 +3,6 @@ def makeBold(string:str):
 
 def makeLink(string: str, link: str):
     return f"[{string}]({link})"
+
+class NoEmbedException(Exception):
+    pass

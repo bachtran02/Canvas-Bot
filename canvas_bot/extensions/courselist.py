@@ -5,11 +5,11 @@ from canvas_bot.library.Firestore import Firestore
 from canvas_bot.library.CanvasApi import CanvasApi
 from canvas_bot.library.DiscordEmbed import DiscordEmbed
 
-course_plugin = lightbulb.Plugin("Course List", "Get list of courses you have active access to")
+course_plugin = lightbulb.Plugin("Course List", 'Get list of courses marked as "favorite" on your Canvas profile')
 
 @course_plugin.command
 @lightbulb.command(
-    "courselist", "Get list of courses you have active access to."
+    "courselist", 'Get list of courses marked as "favorite" on your Canvas profile'
 )
 @lightbulb.implements(lightbulb.SlashCommand)
 async def courselist(ctx: lightbulb.Context):

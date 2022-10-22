@@ -33,7 +33,7 @@ class DiscordEmbed:
         )
     
     # due soon
-    def duesoon_temp_embed(self):
+    def deadline_temp_embed(self):
         return self.create_embed(
             title="Request saved!",
             body="Message is waiting to be updated..."
@@ -42,7 +42,7 @@ class DiscordEmbed:
             icon=self.logo
         )
 
-    def duesoon_embed(self, course_title: str, course_id: str, assgn_list: list, due_in: int):
+    def deadline_embed(self, course_title: str, course_id: str, assgn_list: list, due_in: int):
         if assgn_list:
             title = f"Due within {due_in} Day(s) | {len(assgn_list)} assignment(s)"
         else:

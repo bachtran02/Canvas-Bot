@@ -1,17 +1,16 @@
 import hikari
 from hikari import errors
 import lightbulb
-import syncer
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from canvas_bot.library.Firestore import Firestore
 from canvas_bot.library.CanvasApi import CanvasApi
 from canvas_bot.library.DiscordEmbed import DiscordEmbed
 
-update_plugin = lightbulb.Plugin("Update", "Update all assignment embed instances on interval")
+from canvas_bot.Utils import NoEmbedException
 
-class NoEmbedException(Exception):
-    pass
+update_plugin = lightbulb.Plugin("Update", "Update all assignment embed instances on interval")
 
 async def update_embeds() -> None:
     all_reqs = Firestore().get_all_requests()
@@ -35,7 +34,7 @@ async def update_embeds() -> None:
             continue
 
         assgn_list = CanvasApi().get_due_in(req_data['course-info']['course-id'], due_in)
-        embed = DiscordEmbed().duesoon_embed(
+        embed = DiscordEmbed().deadline_embed(
             course_id=req_data['course-info']['course-id'],
             course_title=req_data['course-info']['course-title'],
             assgn_list=assgn_list,
@@ -63,11 +62,10 @@ async def update_embeds() -> None:
 
 @update_plugin.listener(hikari.StartedEvent)
 async def on_started(_: hikari.StartedEvent) -> None:
-    update_plugin.app.d.sched.add_job(update_embeds, CronTrigger(minute="*/10"))
-    # update_plugin.app.d.sched.add_job(update_embeds, CronTrigger(second="10"))
-    
-    # initiate Firestore query-watch for new requests
-    # Firestore().query_watch(on_snapshot)
+    update_plugin.app.d.sched = AsyncIOScheduler()
+    update_plugin.app.d.sched.start()
+    update_plugin.app.d.sched.add_job(update_embeds, CronTrigger(minute="*/1"))
+
 
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(update_plugin)

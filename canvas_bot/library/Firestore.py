@@ -9,8 +9,6 @@ class Firestore:
         self.col.add(data)
 
     def remove_request(self, document_id: str):
-        print("Embed message inacessible!")
-        print(document_id)
         self.col.document(document_id).delete() 
 
     def get_all_requests(self):

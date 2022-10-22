@@ -1,4 +1,4 @@
-from hikari import Embed, Color
+from hikari import Embed, Color, Permissions
 from datetime import datetime
 import lightbulb
 
@@ -6,9 +6,13 @@ from canvas_bot.library.Firestore import Firestore
 from canvas_bot.library.CanvasApi import CanvasApi
 from canvas_bot.library.DiscordEmbed import DiscordEmbed
 
-duesoon_plugin = lightbulb.Plugin("duesoon", "Get list of assignments due within a day")
+deadline_plugin = lightbulb.Plugin("deadline", "Get list of assignments due within a day")
 
-@duesoon_plugin.command
+@deadline_plugin.command
+@lightbulb.add_checks(
+    lightbulb.owner_only,
+    # lightbulb.has_channel_permissions(Permissions.VIEW_CHANNEL | Permissions.SEND_MESSAGES)
+)
 @lightbulb.option(
     name="course",
     description="Course to follow",
@@ -22,20 +26,21 @@ duesoon_plugin = lightbulb.Plugin("duesoon", "Get list of assignments due within
 )
 @lightbulb.option(
     name="due_in",
-    description="list of assignments due in given days",
+    description="Assignments due within the next given number of days",
     required=False,
     default=1
 )
 @lightbulb.command(
-    "duesoon", "Get assignments due within a number of days"
+    name="deadline",
+    description="Get upcoming deadlines",
 )
 @lightbulb.implements(lightbulb.SlashCommand)
-async def duesoon(ctx: lightbulb.Context):
+async def deadline(ctx: lightbulb.Context):
     course_id = ctx.options.course.split('-')[0].strip()
     course_title = ctx.options.title
     due_in = int(ctx.options.due_in)
 
-    embed = DiscordEmbed().duesoon_temp_embed()
+    embed = DiscordEmbed().deadline_temp_embed()
     res = await ctx.respond(embed=embed)
     msg = await res.message()
     
@@ -51,6 +56,11 @@ async def duesoon(ctx: lightbulb.Context):
         'due-in': due_in
     })
 
+@deadline.set_error_handler
+async def foo_error_handler(event: lightbulb.CommandErrorEvent) -> bool:
+    for cause in event.exception.causes:
+        if isinstance(cause, lightbulb.errors.NotOwner): # not owner exception
+            await event.context.respond("Only bot owner can use this command!")
 
 def load(bot: lightbulb.BotApp):
-    bot.add_plugin(duesoon_plugin)
+    bot.add_plugin(deadline_plugin)
