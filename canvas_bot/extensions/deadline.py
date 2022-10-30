@@ -54,7 +54,7 @@ async def deadline(ctx: lightbulb.Context):
             'message-id': str(msg.id),
         },
         'due-in': due_in
-    })
+    }, msg.channel_id)
 
 @deadline.set_error_handler
 async def foo_error_handler(event: lightbulb.CommandErrorEvent) -> bool:

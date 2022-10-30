@@ -18,6 +18,7 @@ async def update_embeds() -> None:
         req_id = req.id # get document ID
         req_data = req.to_dict() # get document content
         due_in = req_data['due-in']
+        channel_id = req_data['discord']['channel-id']
         try:
             msg = await update_plugin.bot.rest.fetch_message(
                 channel=int(req_data['discord']['channel-id']),
@@ -27,10 +28,10 @@ async def update_embeds() -> None:
                 raise NoEmbedException()
         except NoEmbedException:
             await msg.delete() # delete message without embed
-            Firestore().remove_request(req_id) # remove entry from firestore
+            Firestore().remove_request(req_id, channel_id) # remove entry from firestore
             continue
         except (errors.NotFoundError, errors.ForbiddenError, NoEmbedException):
-            Firestore().remove_request(req_id) # remove entry from firestore
+            Firestore().remove_request(req_id, channel_id) # remove entry from firestore
             continue
 
         assgn_list = CanvasApi().get_due_in(req_data['course-info']['course-id'], due_in)
@@ -65,7 +66,6 @@ async def on_started(_: hikari.StartedEvent) -> None:
     update_plugin.app.d.sched = AsyncIOScheduler()
     update_plugin.app.d.sched.start()
     update_plugin.app.d.sched.add_job(update_embeds, CronTrigger(minute="*/1"))
-
 
 def load(bot: lightbulb.BotApp) -> None:
     bot.add_plugin(update_plugin)
