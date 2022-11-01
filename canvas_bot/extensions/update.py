@@ -43,23 +43,7 @@ async def update_embeds() -> None:
         )
 
         await msg.edit(embed=embed)
-
-
-# @syncer
-# async def update_on_new_req():
-#     msg = await update_plugin.bot.rest.fetch_message(
-#                 channel=int(req['discord']['channel-id']),
-#                 message=int(req['discord']['message-id'])
-#             )
-#     pass
-
-
-# def on_snapshot(col_snapshot, changes, read_time):
-#     print("Number of changes:", len(changes))
-#     for change in changes:
-#         if change.type.name == 'ADDED':
-#             print(f'New req: {change.document.id}')
-#             print(change.document.to_dict())
+            
 
 @update_plugin.listener(hikari.StartedEvent)
 async def on_started(_: hikari.StartedEvent) -> None:

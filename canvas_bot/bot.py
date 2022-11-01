@@ -1,6 +1,5 @@
 import os
 import lightbulb
-import hikari
 from hikari import Intents
 
 bot = lightbulb.BotApp(
@@ -16,7 +15,7 @@ for ext in extensions:
 def run():
     bot.run()
 
-# global error logger
+# global command error logger while bot is running
 @bot.listen(lightbulb.CommandErrorEvent)
 async def on_error(err_event: lightbulb.CommandErrorEvent) -> None:
     ctx = err_event.context

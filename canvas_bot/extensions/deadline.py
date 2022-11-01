@@ -1,6 +1,5 @@
-from hikari import Embed, Color, Permissions
-from datetime import datetime
 import lightbulb
+from requests import exceptions
 
 from canvas_bot.library.Firestore import Firestore
 from canvas_bot.library.CanvasApi import CanvasApi
@@ -50,11 +49,12 @@ async def deadline(ctx: lightbulb.Context):
             'course-title': course_title 
         },
         'discord': {
-            'channel-id': str(msg.channel_id),
+            'server-id': str(ctx.guild_id),
+            'channel-id': str(ctx.channel_id),
             'message-id': str(msg.id),
         },
         'due-in': due_in
-    }, msg.channel_id)
+    }, str(ctx.channel_id))
 
 @deadline.set_error_handler
 async def foo_error_handler(event: lightbulb.CommandErrorEvent) -> bool:
@@ -64,3 +64,4 @@ async def foo_error_handler(event: lightbulb.CommandErrorEvent) -> bool:
 
 def load(bot: lightbulb.BotApp):
     bot.add_plugin(deadline_plugin)
+    

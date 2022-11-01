@@ -9,19 +9,29 @@ class CanvasApi:
         self.HEADERS = {"Authorization": f"Bearer {self.TOKEN}"}
         self._all_course_id = self._get_all_course_id()
 
-    # TODO: cover excpetions
+    def _handle_api_error(self, response):
+        # print(response.status_code)
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as err:
+            print('Error - Invalid Canvas token')
+            exit(1)
+
+    # TODO: handle excpetions
     def _get_all_courses_raw(self, body):
         res = requests.get(
             f'{self.BASEURL}/api/v1/users/self/courses', 
-            headers=self.HEADERS, data=body).json()
-        return res
+            headers=self.HEADERS, data=body)
+        self._handle_api_error(res)
+        return res.json()
 
-    # TODO: cover excpetions
+    # TODO: handle excpetions
     def _get_course_assignments(self, course_id, body):
         res = requests.get(
             f'{self.BASEURL}/api/v1/courses/{course_id}/assignments', 
-            headers=self.HEADERS, data=body).json()
-        return res
+            headers=self.HEADERS, data=body)
+        self._handle_api_error(res)
+        return res.json()
 
     def _get_all_course_id(self) -> set:
         course_id_set = set()

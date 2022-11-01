@@ -4,7 +4,7 @@ class Firestore:
     def __init__(self) -> None:
         self.db = firestore.client()
         self.col = self.db.collection('canvas-bot-db')
-        # manage number of requests in one channel
+        # manage number of requests in one channel/server
         self.admin = self.db.collection('canvas-bot-admin').document('admin')
     
     def save_request(self, data: dict, channel_id: str):
@@ -16,9 +16,14 @@ class Firestore:
     def remove_request(self, document_id: str, channel_id: str):
         self.col.document(document_id).delete()
         self.admin.update({
-            str(channel_id): firestore.Increment(-1),
-            # TODO: if value is 0 remove from db
+            channel_id: firestore.Increment(-1),
         })
+        # if value is 0 remove field from document
+        data = self.admin.get()._data
+        if channel_id in data and data[channel_id] == 0:
+            self.admin.update({
+                channel_id: firestore.DELETE_FIELD
+            })
 
     def get_all_requests(self):
         return self.col.get()
@@ -34,7 +39,9 @@ class Firestore:
                 '0000': 0,  # container datapoint
             })
         self.admin.update({
-            str(channel_id): firestore.Increment(1),
+            channel_id: firestore.Increment(1),
         })
+        
         # TODO: set limit for number of requests in channel/server
+
         return True
