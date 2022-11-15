@@ -10,7 +10,7 @@ from canvas_bot.library.DiscordEmbed import DiscordEmbed
 
 from canvas_bot.Utils import NoEmbedException
 
-update_plugin = lightbulb.Plugin("Update", "Update all assignment embed instances on interval")
+update_plugin = lightbulb.Plugin("update", "Update all assignment embed instances on interval")
 
 async def update_embeds() -> None:
     all_reqs = Firestore().get_all_requests()
@@ -18,20 +18,20 @@ async def update_embeds() -> None:
         req_id = req.id # get document ID
         req_data = req.to_dict() # get document content
         due_in = req_data['due-in']
-        channel_id = req_data['discord']['channel-id']
+        discord_ids = req_data['discord']
         try:
             msg = await update_plugin.bot.rest.fetch_message(
-                channel=int(req_data['discord']['channel-id']),
-                message=int(req_data['discord']['message-id'])
+                channel=int(discord_ids['channel-id']),
+                message=int(discord_ids['message-id'])
             )
             if not msg.embeds: # if embed gets removed from message
                 raise NoEmbedException()
         except NoEmbedException:
             await msg.delete() # delete message without embed
-            Firestore().remove_request(req_id, channel_id) # remove entry from firestore
+            Firestore().remove_request(req_id, discord_ids) # remove entry from firestore
             continue
         except (errors.NotFoundError, errors.ForbiddenError, NoEmbedException):
-            Firestore().remove_request(req_id, channel_id) # remove entry from firestore
+            Firestore().remove_request(req_id, discord_ids) # remove entry from firestore
             continue
 
         assgn_list = CanvasApi().get_due_in(req_data['course-info']['course-id'], due_in)
@@ -43,7 +43,16 @@ async def update_embeds() -> None:
         )
 
         await msg.edit(embed=embed)
-            
+
+async def post_announcement() -> None:
+    # check for new announcements
+    # if announcement != current_id -> new announcement
+    #   push announcement to server
+    # else return
+    # get webhook URL (pair<URL - course id)
+
+
+    pass
 
 @update_plugin.listener(hikari.StartedEvent)
 async def on_started(_: hikari.StartedEvent) -> None:

@@ -5,7 +5,7 @@ from canvas_bot.library.Firestore import Firestore
 from canvas_bot.library.CanvasApi import CanvasApi
 from canvas_bot.library.DiscordEmbed import DiscordEmbed
 
-deadline_plugin = lightbulb.Plugin("deadline", "Get list of assignments due within a day")
+deadline_plugin = lightbulb.Plugin("deadline", "Get self-updated upcoming deadline embed")
 
 @deadline_plugin.command
 @lightbulb.add_checks(
@@ -54,7 +54,7 @@ async def deadline(ctx: lightbulb.Context):
             'message-id': str(msg.id),
         },
         'due-in': due_in
-    }, str(ctx.channel_id))
+    })
 
 @deadline.set_error_handler
 async def foo_error_handler(event: lightbulb.CommandErrorEvent) -> bool:

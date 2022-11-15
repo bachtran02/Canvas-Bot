@@ -32,7 +32,7 @@ class DiscordEmbed:
             icon=self.logo
         )
     
-    # due soon
+    # deadline
     def deadline_temp_embed(self):
         return self.create_embed(
             title="Request saved!",
@@ -69,7 +69,7 @@ class DiscordEmbed:
             org_points = assgn['points_possible']
             points = int(org_points) if org_points.is_integer() else org_points 
 
-            # embed body
+            # embed field body
             body  = f"{makeBold(makeLink(assgn['name'], assgn['html_url']))}\n"
             body += f"{makeBold('Points:')} {points}\n"
             body += f"{makeBold('Due:')} <t:{due_stamp}:f> ({makeBold(f'<t:{due_stamp}:R>')})\n"
@@ -80,3 +80,28 @@ class DiscordEmbed:
                 value=body
             )
         return e
+
+    # get server all embed
+    def all_embed(self, server_all: dict, guild_id: str):
+        if not server_all:
+            return self.create_embed(
+                title="Running embed in server",
+                body="There is no running instance!"
+            ).set_footer(
+                text='Canvas Bot',
+                icon=self.logo
+            )
+
+        e = self.create_embed(
+            title="Running embed in server",
+            # no body / description
+        )
+        for channel_id in server_all:
+            if channel_id == 'num_req':
+                continue
+            e.add_field(
+                name='',
+                body='',
+            )
+            # server_all[channel_id] - channel ids
+            

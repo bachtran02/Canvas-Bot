@@ -8,7 +8,7 @@ bot = lightbulb.BotApp(
     intents=(Intents.GUILDS | Intents.GUILD_MESSAGES)
 )
 
-extensions = ['deadline', 'update']  # 'courselist'
+extensions = ['deadline', 'update', 'all', 'subscribe']  # 'courselist'
 for ext in extensions:
     bot.load_extensions(f"canvas_bot.extensions.{ext}")
 
