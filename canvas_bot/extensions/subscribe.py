@@ -5,6 +5,7 @@ import time
 from canvas_bot.library.Firestore import Firestore
 from canvas_bot.library.CanvasApi import CanvasApi
 from canvas_bot.library.DiscordEmbed import DiscordEmbed
+from canvas_bot.Utils import buildDeadlineChoices
 
 subscribe_plugin = lightbulb.Plugin("subscribe", "Subscribe to get notfied of new course announcement")
 
@@ -16,7 +17,7 @@ subscribe_plugin = lightbulb.Plugin("subscribe", "Subscribe to get notfied of ne
     name="course",
     description="Course to subscribe",
     required=True,
-    choices=CanvasApi().get_all_active_courses('list-string'),
+    choices=buildDeadlineChoices(CanvasApi().get_all_active_courses()),
 )
 @lightbulb.command(
     name="subscribe",

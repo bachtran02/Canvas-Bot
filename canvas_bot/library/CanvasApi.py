@@ -1,6 +1,5 @@
 import os
 import requests
-from datetime import datetime, timedelta
 
 class CanvasApi:
     def __init__(self):
@@ -17,7 +16,7 @@ class CanvasApi:
             print('Error - Invalid Canvas token')
             exit(1)
 
-    # TODO: handle excpetions
+    # TODO: handle exceptions
     def _get_all_courses_raw(self, body):
         res = requests.get(
             f'{self.BASEURL}/api/v1/users/self/courses', 
@@ -26,7 +25,7 @@ class CanvasApi:
         return res.json()
 
     # TODO: handle excpetions
-    def _get_course_assignments(self, course_id, body):
+    def _get_upcoming_assignments(self, course_id, body):
         res = requests.get(
             f'{self.BASEURL}/api/v1/courses/{course_id}/assignments', 
             headers=self.HEADERS, data=body)
@@ -45,7 +44,7 @@ class CanvasApi:
             course_id_set.add(str(course['id']))
         return course_id_set
           
-    def get_all_active_courses(self, option='list-string'):
+    def get_all_active_courses(self):
         course_list = []
         request_body = {
             'include': ['favorites'],
@@ -56,30 +55,14 @@ class CanvasApi:
         all_courses = self._get_all_courses_raw(request_body)
         for course in all_courses:
             # only get favorite (starred) courses
-            if not course['is_favorite']:
-                continue
-            if option == 'list-dict':
-                course_list.append({'id': str(course['id']), 'name': course['name']})
-            elif option == 'list-string':
-                course_list.append(f"{course['id']} - {course['name']}")
+            if course['is_favorite']:
+                course_list.append(course)
         return course_list
-
-    # TODO: maybe add optional param for number of days before due
-    def get_due_in(self, course_id: str, due_in: int):
-        assgn_due_in = []
-        now = datetime.utcnow()
+    
+    # TODO: Remove request if don't have access to course
+    def get_upcoming_assignments(self, course_id: str):
         request_body = {"order_by": "due_at", "bucket": "upcoming", "bucket": "future"}
-
         # exception
         if course_id not in self._all_course_id:
             raise Exception("You don't have access to course with given ID")
-
-        all_assgn = self._get_course_assignments(course_id, request_body)
-        for assgn in all_assgn:
-            if assgn['due_at']: 
-                due = datetime.strptime(assgn['due_at'], '%Y-%m-%dT%H:%M:%SZ') 
-                if due - now <= timedelta(days=due_in):
-                    assgn_due_in.append(assgn)
-                else:
-                    break
-        return assgn_due_in
+        return self._get_upcoming_assignments(course_id, request_body)

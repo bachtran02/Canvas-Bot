@@ -5,7 +5,8 @@ from hikari import Intents
 bot = lightbulb.BotApp(
     token= os.environ.get("DISCORD_TOKEN"),
     help_slash_command=True,
-    intents=(Intents.GUILDS | Intents.GUILD_MESSAGES)
+    intents=(Intents.GUILDS | Intents.GUILD_MESSAGES | Intents.GUILD_VOICE_STATES)
+    # intents=(Intents.ALL)
 )
 
 extensions = ['deadline', 'update', 'all', 'subscribe']  # 'courselist'

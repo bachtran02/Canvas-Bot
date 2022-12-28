@@ -1,64 +1,43 @@
 from firebase_admin import firestore
+import hikari
 
 class Firestore:
     def __init__(self) -> None:
         self.db = firestore.client()
-        self.col = self.db.collection('canvas-bot-db')
-        # manage number of requests in one channel/server
-        self.admin = self.db.collection('canvas-bot-admin').document('deadline-admin')
+        self.req = self.db.collection('request-database')
+        self.course_to_fetch_col = self.db.collection('course-to-fetch')
 
-        self.check_exist()
+    def inc_course_id_to_fetch(self, course_id: str):
+        doc = self.course_to_fetch_col.document(str(course_id))
+        if doc.get().exists:
+            doc.update({ 'num_requests': firestore.Increment(1) })
+        else:
+            doc.set({ 'num_requests': 1 })
 
-    def check_exist(self):
-        # if doc doesn't exist
-        if not self.admin.get()._exists:
-            self.admin.set({
-                '0000': 0,  # set dummy datapoint
-            })
-    
-    def save_request(self, data: dict):
-        if self.check_valid(data['discord']):
-            self.col.add(data)
-            return True
-        return False
+    def dec_course_id_to_fetch(self, course_id: str):
+        doc = self.course_to_fetch_col.document(str(course_id))
+        doc.update({ 'num_requests': firestore.Increment(-1) })
+        if doc.get().to_dict()['num_requests'] == 0:
+            doc.delete()
 
-    def remove_request(self, document_id: str, ids: dict):
-        self.col.document(document_id).delete()
-        self.admin.update({
-            f"{ids['server-id']}.req_num": firestore.Increment(-1),
-            f"{ids['server-id']}.{ids['channel-id']}.req_num": firestore.Increment(-1),
-            f"{ids['server-id']}.{ids['channel-id']}.message_ids":  firestore.ArrayRemove([ids['message-id']])
-        })
-        doc = self.admin.get().to_dict()
-        if ids['server-id'] in doc and doc[ids['server-id']]['req_num'] <= 0:
-            self.admin.update({
-                ids['server-id']: firestore.DELETE_FIELD
-            })
-            return
-        if ids['channel-id'] in doc['server-id'] and doc[ids['server-id']]['channel_id']['req_num'] <= 0:
-            self.admin.update({
-                f"{ids['server-id']}.{ids['channel-id']}": firestore.DELETE_FIELD
-            })
+    def get_course_id_to_fetch(self):
+        id_list = []
+        doc_list = self.course_to_fetch_col.list_documents()
+        for doc in doc_list:
+            id_list.append(doc.id)
+        return id_list
+
+    def save_request(self, guild:hikari.Guild, channel: hikari.GuildChannel, req: dict):
+        self.inc_course_id_to_fetch(req['course_id'])
+        db_doc = self.req.document(str(guild.id))
+        if not db_doc.get().exists:
+            db_doc.set({'guild_name': guild.name})
+        guild_doc = db_doc.collection('guild-requests').document(str(channel.id))
+        if not guild_doc.get().exists:
+            guild_doc.set({'channel_name': channel.name})
+        channel_doc = guild_doc.collection('channel-requests').document(req['message_id'])
+        channel_doc.set(req)
 
     def get_all_requests(self):
-        return self.col.get()
+        return self.req.stream()
 
-    # def query_watch(self, on_snapshot):
-    #     self.col.on_snapshot(on_snapshot)
-
-    # keep track of number requests in channel (will add server too)
-    def check_valid(self, ids: dict):
-        # TODO: set limit for number of requests in channel/server
-        self.admin.update({
-            f"{ids['server-id']}.req_num": firestore.Increment(1),
-            f"{ids['server-id']}.{ids['channel-id']}.req_num": firestore.Increment(1),
-            f"{ids['server-id']}.{ids['channel-id']}.message_ids":  firestore.ArrayUnion([ids['message-id']])
-        })
-        return True
-
-    # TODO: error if get all when no document exists
-    def get_server_requests(self, guild_id: str):
-        doc = self.admin.get().to_dict()
-        if len(doc) == 0 or len(doc) == 1:  # empty or only contain dummy datapoint
-            return []
-        print(doc.get(guild_id, []))

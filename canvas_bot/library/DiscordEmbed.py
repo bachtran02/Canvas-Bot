@@ -81,7 +81,7 @@ class DiscordEmbed:
             )
         return e
 
-    # get server all embed
+    # get server all running embeds
     def all_embed(self, server_all: dict, guild_id: str):
         if not server_all:
             return self.create_embed(
