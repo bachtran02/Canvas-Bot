@@ -82,8 +82,9 @@ class DiscordEmbed:
         return e
 
     # get server all running embeds
-    def all_embed(self, server_all: dict, guild_id: str):
-        if not server_all:
+    def all_embed(self, guild_dict: dict):
+
+        if not guild_dict:
             return self.create_embed(
                 title="Running embed in server",
                 body="There is no running instance!"
@@ -92,16 +93,29 @@ class DiscordEmbed:
                 icon=self.logo
             )
 
+        guild_id = guild_dict['guild_id']
+        # format: base_url/{guild_id}/{channel_id}/{message_id}
         e = self.create_embed(
-            title="Running embed in server",
-            # no body / description
+            title=guild_dict['guild_name'],
+            body="",
+        ).set_footer(
+            text='Canvas Bot',
+            icon=self.logo
         )
-        for channel_id in server_all:
-            if channel_id == 'num_req':
-                continue
+
+        for channel_dict in guild_dict['guild_requests']:
+            channel_id = channel_dict['channel_id']
+            body_str = ""
+            for message_dict in channel_dict['channel_requests']:
+                msg_id = message_dict['message_id']
+                body_str += makeLink(
+                    string=message_dict['title'],
+                    link=f"https://discord.com/channels/{guild_id}/{channel_id}/{msg_id}"
+                ) + '\n'
             e.add_field(
-                name='',
-                body='',
+                name=channel_dict['channel_name'],
+                value=body_str,
+                inline=True,
             )
-            # server_all[channel_id] - channel ids
+        return e
             
