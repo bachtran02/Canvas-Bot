@@ -1,12 +1,15 @@
 import os
 import pytz
-from canvas_bot.Utils import *
+from canvas_bot.utils import makeBold, makeLink
 from hikari import Embed, Color
 from datetime import datetime
 
 class DiscordEmbed:
     def __init__(self) -> None:
-        self.logo = os.environ.get('CANVAS_LOGO_URL')
+        self.logo = os.getenv(key='CANVAS_LOGO_URL', default=None)
+        self.BASE_URL = 'https://deanza.instructure.com'
+        self.BASE_DISCORD_MSG_URL = 'https://discord.com/channels/'
+
 
     @staticmethod
     def create_embed(title, body):
@@ -17,13 +20,13 @@ class DiscordEmbed:
             timestamp=datetime.now().astimezone()
         )
     
-    # course list 
-    def courselist_embed(self, course_list: list):
+    # allcourse
+    def allcourse_embed(self, course_list: list):
         body = ""
         for course in course_list:
-            course_link = f"{os.environ.get('CANVAS_COURSE_BASE_URL')}{course['id']}"
-            body += makeBold(f"{course['id']} - {makeLink(course['name'], course_link)}") + '\n'
-
+            course_link = f"{self.BASE_URL}/courses/{course['id']}"
+            body += f"{makeBold(course['id'])} - {makeLink(course['name'], course_link)}" + '\n'
+            
         return self.create_embed(
             title="Course List",
             body=body,
@@ -48,7 +51,7 @@ class DiscordEmbed:
         else:
             title = f"No Assignment Due within {due_in} Day(s)"
             
-        course_link = f"{os.environ.get('CANVAS_COURSE_BASE_URL')}{course_id}"
+        course_link = f"{self.BASE_URL}/courses/{course_id}"
         body = makeBold(f'Course: {makeLink(course_title, course_link)}')
 
         e = self.create_embed(
@@ -81,13 +84,11 @@ class DiscordEmbed:
             )
         return e
 
-    # get server all running embeds
-    def all_embed(self, guild_dict: dict):
-
+    def all_deadline_embed(self, guild_dict: dict):
         if not guild_dict:
             return self.create_embed(
-                title="Running embed in server",
-                body="There is no running instance!"
+                title="There is no deadline embed in the server",
+                body=None
             ).set_footer(
                 text='Canvas Bot',
                 icon=self.logo
@@ -96,8 +97,8 @@ class DiscordEmbed:
         guild_id = guild_dict['guild_id']
         # format: base_url/{guild_id}/{channel_id}/{message_id}
         e = self.create_embed(
-            title=guild_dict['guild_name'],
-            body="",
+            title=f"All deadline embeds in {guild_dict['guild_name']}",
+            body=None,
         ).set_footer(
             text='Canvas Bot',
             icon=self.logo
@@ -109,8 +110,8 @@ class DiscordEmbed:
             for message_dict in channel_dict['channel_requests']:
                 msg_id = message_dict['message_id']
                 body_str += makeLink(
-                    string=message_dict['title'],
-                    link=f"https://discord.com/channels/{guild_id}/{channel_id}/{msg_id}"
+                    string=f"{message_dict['course_title']}-{message_dict['due_in']}d",
+                    link=f"{self.BASE_DISCORD_MSG_URL}{guild_id}/{channel_id}/{msg_id}"
                 ) + '\n'
             e.add_field(
                 name=channel_dict['channel_name'],
@@ -118,4 +119,62 @@ class DiscordEmbed:
                 inline=True,
             )
         return e
+    
+    def course_roster_embed(self, course_info: list, roster_search: list, query: str):
+        
+        body = f"Course: {makeBold(course_info[1])}\n"
+
+        if not query:
             
+            body += f"Student Count: {makeBold(len(roster_search))}\n```"
+            i = 0
+            for user in roster_search:
+                if not i % 2:
+                    body += '\n' 
+                body += '{:<25}'.format(user['name']) + '\t'
+                i += 1
+            body += "```"
+
+            return self.create_embed(
+                title=f"Course Roster",
+                body=body,
+            ).set_footer(
+                text='Canvas',
+                icon=self.logo
+            )
+    
+        body += f"Search query: {makeBold(query)}\n"
+        body += f"Search result: {makeBold(len(roster_search))}\n\n"
+
+        e = self.create_embed(
+            title=f"Course Roster",
+            body=body,
+        ).set_footer(
+            text='Canvas',
+            icon=self.logo
+        )
+
+        i = 0
+        for user in roster_search:
+            
+            canvas_url = f"{self.BASE_URL}/courses/{course_info[0]}/users/{user['id']}"
+            
+            dt = datetime.strptime(user['created_at'], '%Y-%m-%dT%H:%M:%S%z')
+            ts = int(dt.timestamp())
+            
+            body = f"Canvas ID: {makeLink(makeBold(user['id']), canvas_url)}\n"
+            body += f"Display name: {makeBold(user['name'])}\n"
+            body += f"Sortable name: {makeBold(user['sortable_name'])}\n"
+            body += f"Created: <t:{ts}:d> (<t:{ts}:R>)"
+
+            e.add_field(
+                name=user['name'],
+                value=body,
+                inline=True,
+            )
+
+            i += 1
+            if i >= 10:
+                break
+            
+        return e

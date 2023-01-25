@@ -1,11 +1,11 @@
-from firebase_admin import firestore
 import hikari
+from firebase_admin import firestore
+
 
 class Firestore:
-    def __init__(self) -> None:
-        self.db = firestore.client()
-        self.req = self.db.collection('request-database')
-        self.course_to_fetch_col = self.db.collection('course-to-fetch')
+    def __init__(self, db) -> None:
+        self.req_col = db.collection('deadline-database')
+        self.course_to_fetch_col = db.collection('course-to-fetch')
 
     def inc_course_id_to_fetch(self, course_id: str):
         doc = self.course_to_fetch_col.document(str(course_id))
@@ -28,8 +28,7 @@ class Firestore:
         return id_list
 
     def save_request(self, guild:hikari.Guild, channel: hikari.GuildChannel, req: dict):
-        self.inc_course_id_to_fetch(req['course_id'])
-        guild_doc = self.req.document(str(guild.id))
+        guild_doc = self.req_col.document(str(guild.id))
         if not guild_doc.get().exists:
             guild_doc.set({'guild_name': guild.name})
         channel_doc = guild_doc.collection('guild-requests').document(str(channel.id))
@@ -37,12 +36,13 @@ class Firestore:
             channel_doc.set({'channel_name': channel.name})
         message_doc = channel_doc.collection('channel-requests').document(req['message_id'])
         message_doc.set(req)
+        self.inc_course_id_to_fetch(req['course_id'])
 
     def get_all_requests(self):
-        return self.req.stream()
+        return self.req_col.stream()
 
     def get_guild_requests(self, guild_id: str):
-        guild_doc = self.req.document(guild_id)
+        guild_doc = self.req_col.document(guild_id)
         if not guild_doc.get().exists:
             return {}
         # construct response dict
@@ -57,15 +57,10 @@ class Firestore:
             channel_req_col = channel_doc.reference.collection('channel-requests')
             channel_req = []
             for msg_doc in channel_req_col.get():
-                msg_dict = {}
-                msg_dict['message_id'] = msg_doc.id
-                msg_dict['title'] = msg_doc.to_dict()['course_title']
+                msg_dict = msg_doc.to_dict()
                 channel_req.append(msg_dict)
             channel_dict['channel_requests'] = channel_req
             guild_req.append(channel_dict)
         guild_dict['guild_requests'] = guild_req
 
         return guild_dict
-
-
-

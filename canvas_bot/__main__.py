@@ -1,19 +1,20 @@
 import os
+import logging as log
 from canvas_bot import bot
 from hikari import errors
+
 import firebase_admin
 from firebase_admin import credentials
 
 if __name__ == "__main__":
     try:
-        # initiate Firebase app
+        # initializes and returns a new Firebase app instance
         cred = credentials.Certificate(os.environ.get('FIRESTORE_KEY_PATH'))
         firebase_admin.initialize_app(cred)
-        # run Discord bot instance
-        bot.run()
         
-    except PermissionError:
-        print("Error - Invalid key/path to key for Firebase app")
+        bot.run()  # run Discord bot instance
+    except (PermissionError, FileNotFoundError):
+        log.error("Invalid key/path to key for Firebase app")
     except errors.UnauthorizedError:
-        print("Error - Invalid Bot Token")
+        log.error("Invalid Bot Token")
     
