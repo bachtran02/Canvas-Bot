@@ -6,4 +6,4 @@ COPY secrets/ secrets/
 
 RUN pip install -r requirements.txt
 
-CMD ["python", "-m", "canvas_bot" ]
+CMD ["python", "-O", "-m", "canvas_bot" ]
