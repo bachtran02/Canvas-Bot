@@ -2,7 +2,7 @@ import lightbulb
 from hikari import Permissions
 
 from canvas_bot.library.CanvasApi import CanvasApi
-from canvas_bot.utils import buildDeadlineChoices
+from canvas_bot.utils import buildDeadlineChoices, shortenCrnName
 
 deadline_plugin = lightbulb.Plugin("deadline", "Get self-updated upcoming-deadline embed")
 
@@ -24,7 +24,8 @@ deadline_plugin = lightbulb.Plugin("deadline", "Get self-updated upcoming-deadli
 @lightbulb.option(
     name="title",
     description="Course title (e.g: CIS 22C, Math 22)",
-    required=True,
+    required=False,
+    default=""
 )
 @lightbulb.option(
     name="due_in",
@@ -41,9 +42,13 @@ async def deadline(ctx: lightbulb.Context):
     ds = deadline_plugin.app.d
 
     course_id = ctx.options.course.split('-')[0].strip()
-    course_title = ctx.options.title
-    due_in = min(int(ctx.options.due_in), 14)
 
+    if ctx.options.title:
+        course_title = ctx.options.title
+    else:
+        course_title = shortenCrnName(ctx.options.course.split('-')[1].strip())
+
+    due_in = min(int(ctx.options.due_in), 14)
 
     embed = ds.discord_embed.deadline_temp_embed()
     res = await ctx.respond(embed=embed)
@@ -82,8 +87,6 @@ async def foo_error_handler(event: lightbulb.CommandErrorEvent) -> bool:
 
     if isinstance(exception, lightbulb.NotOwner):
         await event.context.respond("Only bot owner can use this command!")
-    elif isinstance(exception, lightbulb.CommandIsOnCooldown):
-        await event.context.respond(f"This command is on cooldown. Retry in `{exception.retry_after:.2f}` seconds.")
 
 def load(bot: lightbulb.BotApp):
     bot.add_plugin(deadline_plugin)

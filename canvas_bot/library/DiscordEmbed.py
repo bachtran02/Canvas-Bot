@@ -1,6 +1,6 @@
 import os
 import pytz
-from canvas_bot.utils import makeBold, makeLink
+from canvas_bot.utils import makeBold, makeLink, toPercent, shortenCrnName
 from hikari import Embed, Color
 from datetime import datetime
 
@@ -24,14 +24,14 @@ class DiscordEmbed:
     def allcourse_embed(self, course_list: list):
         body = ""
         for course in course_list:
-            course_link = f"{self.BASE_URL}/courses/{course['id']}"
-            body += f"{makeBold(course['id'])} - {makeLink(course['name'], course_link)}" + '\n'
+            course_url = f"{self.BASE_URL}/courses/{course['id']}"
+            body += f"{makeBold(course['id'])} - {makeLink(course['name'], course_url)}" + '\n'
             
         return self.create_embed(
             title="Course List",
             body=body,
         ).set_footer(
-            text='Canvas',
+            text='Canvas Bot',
             icon=self.logo
         )
     
@@ -51,8 +51,8 @@ class DiscordEmbed:
         else:
             title = f"No Assignment Due within {due_in} Day(s)"
             
-        course_link = f"{self.BASE_URL}/courses/{course_id}"
-        body = makeBold(f'Course: {makeLink(course_title, course_link)}')
+        course_url = f"{self.BASE_URL}/courses/{course_id}"
+        body = makeBold(f'Course: {makeLink(course_title, course_url)}')
 
         e = self.create_embed(
             title=title,
@@ -73,9 +73,9 @@ class DiscordEmbed:
             points = int(org_points) if org_points.is_integer() else org_points 
 
             # embed field body
-            body  = f"{makeBold(makeLink(assgn['name'], assgn['html_url']))}\n"
-            body += f"{makeBold('Points:')} {points}\n"
-            body += f"{makeBold('Due:')} <t:{due_stamp}:f> ({makeBold(f'<t:{due_stamp}:R>')})\n"
+            body  = f"{makeBold(makeLink(assgn['name'], assgn['html_url']))}" + '\n'
+            body += f"{makeBold('Points:')} `{points}`" + '\n'
+            body += f"{makeBold('Due:')} <t:{due_stamp}:f> ({makeBold(f'<t:{due_stamp}:R>')})" + '\n'
 
             name = makeBold("Quiz" if assgn['is_quiz_assignment'] is True else "Assignment")
             e.add_field(
@@ -122,14 +122,16 @@ class DiscordEmbed:
     
     def course_roster_embed(self, course_info: list, roster_search: list, query: str):
         
-        body = f"Course: {makeBold(course_info[1])}\n"
+        course_url = f"{self.BASE_URL}/courses/{course_info[0]}"
+        body = f"Course: {makeLink(makeBold(shortenCrnName(course_info[1])), course_url)}\n"
 
         if not query:
             
-            body += f"Student Count: {makeBold(len(roster_search))}\n```"
+            body += f"Student Count: {makeBold(len(roster_search))}\n"
+            body += '```'
             i = 0
             for user in roster_search:
-                if not i % 2:
+                if not i % 2:  # 2 entries per row
                     body += '\n' 
                 body += '{:<25}'.format(user['name']) + '\t'
                 i += 1
@@ -139,7 +141,7 @@ class DiscordEmbed:
                 title=f"Course Roster",
                 body=body,
             ).set_footer(
-                text='Canvas',
+                text='Canvas Bot',
                 icon=self.logo
             )
     
@@ -150,7 +152,7 @@ class DiscordEmbed:
             title=f"Course Roster",
             body=body,
         ).set_footer(
-            text='Canvas',
+            text='Canvas Bot',
             icon=self.logo
         )
 
@@ -173,8 +175,66 @@ class DiscordEmbed:
                 inline=True,
             )
 
+            # if search query exists then limits to first 10 results
             i += 1
             if i >= 10:
                 break
             
+        return e
+
+    def assignment_stats_embed(self, course_info: list, assgn_list: list):
+        
+        shortenCrnName(course_info[1])
+
+        course_url = f"{self.BASE_URL}/courses/{course_info[0]}"
+        body = f"Course: {makeLink(makeBold(shortenCrnName(course_info[1])), course_url)}\n"
+
+        e = self.create_embed(
+            title=f"Assignment Stats",
+            body=body,
+        ).set_footer(
+            text='Canvas Bot',
+            icon=self.logo
+        )
+
+        cnt_stats = 0
+        for assgn in assgn_list:
+            if 'score_statistics' not in assgn:
+                continue
+            
+            cnt_stats += 1
+            
+            # points
+            org_points = assgn['points_possible']
+            points = int(org_points) if org_points.is_integer() else org_points
+            stats = assgn['score_statistics']
+
+            # embed field body
+            body  = f"{makeBold(makeLink(assgn['name'], assgn['html_url']))}\n"
+            body += "```"
+
+            body += f"Points: {points}" + '\n'
+            body += '{:<20}'.format(f"Max: {stats['max']} ({toPercent(stats['max'], points)}%)") + '\t'
+            body += f"Average: {stats['mean']} ({toPercent(stats['mean'], points)}%)" + '\n'
+            body += '{:<20}'.format(f"Min: {stats['min']} ({toPercent(stats['min'], points)}%)") + '\t'
+            body += f"Median:  {stats['median']} ({toPercent(stats['median'], points)}%)" + '\n'
+
+            # quartile
+            # body += '{:<25}'.format(f"Upper Quartile: {stats['upper_q']} ({toPercent(stats['upper_q'], points)}%)") + '\t'
+            # body += '{:<25}'.format(f"Lower Quartile: {stats['lower_q']} ({toPercent(stats['lower_q'], points)}%)") + '\n'
+
+            body += "```"
+
+            name = makeBold("Quiz Stats" if assgn['is_quiz_assignment'] is True else "Assignment Stats")
+            e.add_field(
+                name=name,
+                value=body
+            )
+
+        if not cnt_stats:
+            e.add_field(
+                name="No Stats found!",
+                value="Grade Statistics not exist or hidden by instructor"
+            )
+
         return e

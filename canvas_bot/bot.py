@@ -16,6 +16,7 @@ bot = lightbulb.BotApp(
     token=os.environ.get("DISCORD_TOKEN"),
     help_slash_command=False,
     intents=(Intents.GUILDS | Intents.GUILD_MESSAGES),
+    banner=None,
 )
 
 for ext in ['deadline', 'jobs', 'commands']:

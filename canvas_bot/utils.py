@@ -11,3 +11,8 @@ def buildDeadlineChoices(courses: dict):
         command_choices.append(f"{course['id']} - {course['name']}")
     return command_choices
     
+def toPercent(value: float, base: float):
+    return round(value/float(base) * 100, 2)
+
+def shortenCrnName(name: str):
+    return " ".join(name.split(" ", 3)[:3])

@@ -23,7 +23,7 @@ async def update_deadline() -> None:
     for course_id in course_ids:
         try:
             assgn_data[course_id] = ds.canvas_api.get_upcoming_assignments(course_id)
-        except ValueError as e:
+        except ValueError as e:  # known exception: user no longer have access to a course
             log.error(e)
 
     # update request embeds

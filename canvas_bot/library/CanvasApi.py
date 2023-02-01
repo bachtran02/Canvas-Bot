@@ -14,10 +14,10 @@ class CanvasApi:
 
     # def _handle_api_error(self, response):
     #     try:
+    #         log.info(f"{response.status_code} - {response.reason}")
     #         response.raise_for_status()
     #     except requests.exceptions.HTTPError as err:
-    #         log.error('Invalid Canvas token')
-    #         exit(1)
+    #         raise ValueError(f"You don't have access to course with ID '{course_id}'")
 
     def verify_credential(self):
         try:
@@ -33,7 +33,7 @@ class CanvasApi:
 
     def _get_all_courses_raw(self, body):
         res = requests.get(
-            f'{self.BASEURL}/api/v1/users/self/courses', 
+            f'{self.BASEURL}/api/v1/courses', 
             headers=self.HEADERS, data=body)
         # self._handle_api_error(res)
         return res.json()
@@ -43,7 +43,6 @@ class CanvasApi:
             f'{self.BASEURL}/api/v1/courses/{course_id}/assignments', 
             headers=self.HEADERS, data=body,
         )
-        # self._handle_api_error(res)
         return res.json()
 
     def _get_course_roster(self, course_id, body):
@@ -56,7 +55,7 @@ class CanvasApi:
     def _get_all_course_id(self) -> set:
         course_id_set = set()
         request_body = {
-            'enrollment_type': ['student'],
+            'enrollment_type': 'student',
             'enrollment_state': 'active',
             'per_page': 100  # hard coding: maximum 100 courses (TODO: what if courses >= 100)
         }
@@ -68,8 +67,8 @@ class CanvasApi:
     def get_favorite_courses(self):
         course_list = []
         request_body = {
-            'include': ['favorites'],
-            'enrollment_type': ['student'],
+            'include[]': ['favorites'],
+            'enrollment_type': 'student',
             'enrollment_state': 'active',
             'per_page': 100
         }
@@ -82,14 +81,35 @@ class CanvasApi:
         return course_list if course_list else all_courses
     
     def get_upcoming_assignments(self, course_id: str):
-        request_body = {"order_by": "due_at", "bucket": "upcoming", "bucket": "future"}
+        
+        self._all_course_id = self._get_all_course_id()
         if course_id not in self._all_course_id:
             raise ValueError(f"You don't have access to course with ID '{course_id}'")
+        
+        request_body = {
+            "order_by": "due_at",
+            "bucket": "upcoming",
+        }
+
+        return self._get_assignments(course_id, request_body)
+
+    def get_past_assignments_stats(self, course_id: str):
+
+        self._all_course_id = self._get_all_course_id()
+        if course_id not in self._all_course_id:
+            raise ValueError(f"You don't have access to course with ID '{course_id}'")
+        
+        request_body = {
+            'include[]': ['submission','score_statistics'],
+            'bucket': 'past',
+            'per_page': 100,
+        }
+
         return self._get_assignments(course_id, request_body)
 
     def get_course_roster(self, course_id: str, query: str):
         request_body = {
-            'enrollment_type': ['student'],
+            'enrollment_type[]': ['student'],
             'per_page': 100,
             'search_term': query,
         }

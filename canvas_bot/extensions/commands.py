@@ -22,6 +22,7 @@ async def allcourse(ctx: lightbulb.Context):
     embed = ds.discord_embed.allcourse_embed(course_list)
     await ctx.respond(embed=embed)
 
+
 @commands_plugin.command
 @lightbulb.add_checks(
     lightbulb.has_channel_permissions(
@@ -53,6 +54,32 @@ async def course_roster(ctx: lightbulb.Context):
     roster_search = ds.canvas_api.get_course_roster(course_info[0], query[0])
     embed = ds.discord_embed.course_roster_embed(course_info, roster_search, query[0])
     await ctx.respond(embed=embed) 
+
+
+@commands_plugin.command
+@lightbulb.add_checks(
+    lightbulb.has_channel_permissions(
+    Permissions.VIEW_CHANNEL | Permissions.SEND_MESSAGES)
+)
+@lightbulb.option(
+    name="course",
+    description="Course to get assignments' stats",
+    required=True,
+    choices=buildDeadlineChoices(CanvasApi().get_favorite_courses()),
+)
+@lightbulb.command(
+    "grades", "Get course's assignments' stats"
+)
+@lightbulb.implements(lightbulb.SlashCommand)
+async def stats(ctx: lightbulb.Context):
+    ds = commands_plugin.app.d
+    
+    course_info = [x.strip() for x in ctx.options.course.split('-')]
+    assgn_list = ds.canvas_api.get_past_assignments_stats(course_info[0])
+    embed = ds.discord_embed.assignment_stats_embed(course_info, assgn_list)
+
+    await ctx.respond(embed=embed) 
+
 
 
 @commands_plugin.set_error_handler
