@@ -1,7 +1,7 @@
 # Canvas Bot
 
 ## What is this?
-A splash-command-supported Discord bot built with [hikari](https://www.hikari-py.dev/) and [lightbulb](https://hikari-lightbulb.readthedocs.io/en/latest/) to bring data from De Anza Canvas to the Discord platform. The purpose of the bot is to serve a course's Discord server and provides relevant course-wise information to all students in that course. 
+A splash-command-supported Discord bot built with [hikari](https://www.hikari-py.dev/) and [lightbulb](https://hikari-lightbulb.readthedocs.io/en/latest/) to bring data from De Anza Canvas to the Discord platform. The purpose of the bot is to serve a course's Discord server and provides relevant course-wise information to all students in that course through Discord. 
 
 In the future, the bot may be tweaked to become more user-oriented, or that will be made into a separate project.  
 
